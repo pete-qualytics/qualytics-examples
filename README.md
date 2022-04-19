@@ -6,11 +6,11 @@ This repository contains the example code for an Airflow pipeline that load Lore
 # Repository Files
 **/dags/snowflake_lc_demo.py**  : Airflow pipeline to for multi stage architecture. 
  This DAG performs the following steps: 
-	 - lc_qscan_raw : Perform Qualytics Data Store Scan on files in S3 to detect anomolies
-	 - lc_append_raw_to_bronze : Use Snowflake COPY to load file data into Snowflake "Bronze" table
-	 - lc_qscan_bronze : Perform Qualytics Data Store Scan on Snowflake "Bronze" table to detect anomolies
-	 - lc_merge_bronze_to_silver :Use Snowflake MERGE to refine data and load into Snowflake "Silver" table
-	 - lc_qscan_silverLoad : Perform Qualytics Data Store Scan on Snowflake "Silver" table to detect anomolies
+ - lc_qscan_raw : Perform Qualytics Data Store Scan on files in S3 to detect anomolies
+ - lc_append_raw_to_bronze : Use Snowflake COPY to load file data into Snowflake "Bronze" table
+ - lc_qscan_bronze : Perform Qualytics Data Store Scan on Snowflake "Bronze" table to detect anomolies
+ - lc_merge_bronze_to_silver :Use Snowflake MERGE to refine data and load into Snowflake "Silver" table
+ - lc_qscan_silverLoad : Perform Qualytics Data Store Scan on Snowflake "Silver" table to detect anomolies
 ```mermaid
 graph LR
 A(lc_qscan_raw) --> B(lc_append_raw_to_bronze) --> C(lc_qscan_bronze) --> D(lc_merge_bronze_to_silve)  --> E[lc_qscan_silver]
