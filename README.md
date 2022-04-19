@@ -1,7 +1,6 @@
 # Qualytics Airflow Examples
 
-This repository contains the example code for an Airflow pipeline that load Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-
+This repository contains the example code for an Airflow pipeline that loads a Snowflake lakehouse.  The example uses the popular [Lending Club dataset](https://www.kaggle.com/datasets/wordsforthewise/lending-club) provided by Kaggle.  
 
 # Repository Files
 **/dags/snowflake_lc_demo.py**  : Airflow pipeline to for multi stage architecture. 
@@ -36,7 +35,6 @@ AUTH0_CLIENT_SECRET = "[You Client Secret]"
 **/qualytics/scan_functions/scan_data.py** : Calls Qualytics REST API to initation a SCAN operation
 >  Note: The Qualytics code requires the following python modules:  jose, dotenv, requests, json
 
-**/snowflake/DDL/create_landing_stage_tables.sql**: Creates 
 
 # Airflow Server
 
