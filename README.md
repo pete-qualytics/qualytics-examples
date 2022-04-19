@@ -16,17 +16,19 @@ graph LR
 A(lc_qscan_raw) --> B(lc_append_raw_to_bronze) --> C(lc_qscan_bronze) --> D(lc_merge_bronze_to_silve)  --> E[lc_qscan_silver]
 ```
 **Update**
-  - QUALYTICS_API_BASE_URL = 'https://[ENV].qualytics.io/api/'
-  - os.path.dirname(__file__), '[REPO PATH]/qualytics-airflow-examples', 'qualytics')
-
+  ```
+  QUALYTICS_API_BASE_URL = 'https://[ENV].qualytics.io/api/'
+  os.path.dirname(__file__), '[REPO PATH]/qualytics-airflow-examples', 'qualytics')
+ ```
 
 **/qualytics/.env** : This file is not in the repository but need to be created.   It stores you Qualytics credentials
-> AUTH0_DOMAIN = "auth.qualytics.io"
->AUTH0_AUDIENCE = "[Your Audience]"
->AUTH0_ORGANIZATION = ""
->AUTH0_CLIENT_ID = "[Your Client ID]"
->AUTH0_CLIENT_SECRET = "[You Client Secret]"
->
+```
+AUTH0_DOMAIN = "auth.qualytics.io"
+AUTH0_AUDIENCE = "[Your Audience]"
+AUTH0_ORGANIZATION = ""
+AUTH0_CLIENT_ID = "[Your Client ID]"
+AUTH0_CLIENT_SECRET = "[You Client Secret]"
+```
 > Contact Qualytics for details
 
 **/qualytics/auth/get_token.py** : Calls Qualytics REST API to request an authentication Token for a Qualytics environment
