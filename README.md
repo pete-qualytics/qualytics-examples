@@ -1,1 +1,1 @@
-# qualytics-airflow-snowflake-demo
+# loan-default-prediction-demo
