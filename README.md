@@ -1,4 +1,4 @@
 # Qualytics Examples
 
-This repository contains the example code for data engineering pipeline that utilize Qualytics Data Firewall Scans
+This repository contains example code for data engineering pipelines that utilize Qualytics Data Firewall Scans
 to identify and quarantine potential data anomalies.
