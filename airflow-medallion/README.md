@@ -1,7 +1,6 @@
 # Qualytics Airflow Examples
 
-This repository contains the example code for an Airflow data engineering pipeline that loads a Snowflake lakehouse from an AWS S3 source.  The example uses the popular [Lending Club dataset](https://www.kaggle.com/datasets/wordsforthewise/lending-club) provided by Kaggle.  Qualytics Data Firewall Scans are performed after each data load stage
-to identify and quarantine potential data anomalies.
+This repository contains the example code for an Airflow data engineering pipeline that loads a Snowflake lakehouse from an AWS S3 source.  The example uses the popular [Lending Club dataset](https://www.kaggle.com/datasets/wordsforthewise/lending-club) provided by Kaggle.  Qualytics scans are performed after each data load stage to identify, manage and remediate potential data anomalies.
 
 # Repository Files
 **/dags/snowflake_lc_demo.py**  : Airflow pipeline to for multi stage architecture. 
