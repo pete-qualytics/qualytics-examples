@@ -20,7 +20,7 @@ A(lc_qscan_raw) --> B(lc_append_raw_to_bronze) --> C(lc_qscan_bronze) --> D(lc_m
   os.path.dirname(__file__), '[REPO PATH]/qualytics-airflow-examples', 'qualytics')
  ```
 
-**/qualytics/.env** : This file is not in the repository but need to be created.   It stores you Qualytics credentials
+**/qualytics/.env** : This file is not in the repository but needs to be created.   It stores your Qualytics credentials
 ```
 AUTH0_DOMAIN = "auth.qualytics.io"
 AUTH0_AUDIENCE = "[Your Audience]"
