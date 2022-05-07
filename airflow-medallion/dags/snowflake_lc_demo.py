@@ -131,14 +131,14 @@ lc_append_raw_to_bronze = SnowflakeOperator(
 lc_qscan_raw = PythonOperator(
     task_id='lc_qscan_raw',
     dag=dag,
-    python_callable=scan,
+    python_callable=run_scan,
     op_kwargs={'datastore_name' : QUALYTICS_RAW_DATASTORE, 'container_name' : 'ALL', 'api_base_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
 )
 
 lc_qscan_bronze = PythonOperator(
     task_id='lc_qscan_bronze',
     dag=dag,
-    python_callable=scan,
+    python_callable=run_scan,
     op_kwargs={'datastore_name' : QUALYTICS_BRONZE_DATASTORE, 'container_name' : QUALYTICS_BRONZE_CONTAINER, 'api_base_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
 )
 
@@ -155,7 +155,7 @@ lc_merge_bronze_to_silver = SnowflakeOperator(
 lc_qscan_silver = PythonOperator(
     task_id='lc_qscan_silver',
     dag=dag,
-    python_callable=scan,
+    python_callable=run_scan,
     op_kwargs={'datastore_name' : QUALYTICS_SILVER_DATASTORE, 'container_name' : QUALYTICS_SILVER_CONTAINER, 'api_base_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
 )
 
