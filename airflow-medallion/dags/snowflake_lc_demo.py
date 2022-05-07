@@ -4,7 +4,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '<REPO PATH>/qualytics-airflow-examples', 'qualytics'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '<REPO PATH>/qualytics-examples/airflow-medallion', 'qualytics'))
 
 from auth.get_token import get_token
 from scan_functions.scan_data import run_scan
