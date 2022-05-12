@@ -13,7 +13,7 @@ This repository contains the example code for an Airflow data engineering pipeli
  - lc_qscan_silverLoad : Perform Qualytics Data Store Scan on Snowflake "Silver" table to detect anomolies
 ```mermaid
 graph LR
-A(lc_qscan_raw) --> B(lc_check_scan_raw) --> C(lc_append_raw_to_bronze) --> C(lc_qscan_bronze) --> E(lc_merge_bronze_to_silver)  --> E(lc_merge_bronze_to_silver_remediated)  --> G[lc_qscan_silver]
+A(lc_qscan_raw) --> B(lc_check_scan_raw) --> C(lc_append_raw_to_bronze) --> D(lc_qscan_bronze) --> E(lc_merge_bronze_to_silver)  --> F(lc_merge_bronze_to_silver_remediated)  --> G[lc_qscan_silver]
 ```
 **Update**
   ```
