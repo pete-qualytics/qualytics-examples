@@ -4,7 +4,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 import snowflake.connector
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '/home/ubuntu/code/qualytics-examples/airflow-medallion', 'qualytics'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '<path to git repo>/qualytics-examples/airflow-medallion', 'qualytics'))
 
 from auth.get_token import get_token
 from scan_functions.scan_data import run_scan
@@ -29,7 +29,9 @@ QUALYTICS_SILVER_CONTAINER = 'SILVER_LC_LOANS'
 QUALYTICS_API_BASE_URL = 'https://databricks.qualytics.io/api/'
 QUALYTICS_AUTH_HEADER = get_token()
 QUALYTICS_SF_QUARANTINE_TABLE = '_MEDALLION_SF_BRONZE_LC_LOANS'
+QUALYTICS_SF_ANOMALIES_TABLE = '_MEDALLION_SF_ANOMALIES'
 QUALYTICS_S3_ANOMALIES_TABLE = '_MEDALLION_S3_ANOMALIES'
+QUALYTICS_ENRICHMENT_LOOKUP_TABLE = 'LOOKUPS_LC_LOANS'
 QUALYTICS_ENRICHMENT_REMEDIATE_TAG = 'REMEDIATE'
 QUALYTICS_ENRICHMENT_STOP_TAG = 'STOP'
 QUALYTICS_ENRICHMENT_QUARANTINE_TAG = 'QUARANTINE'
@@ -72,7 +74,7 @@ LOAD_SILVER_TABLE_CMD = (
                  total_acc,
                  case when loan_status <> 'Fully Paid' then true else false end as bad_loan,
                  round(total_pymnt - loan_amnt, 2) net
-            from MEDALLION_ARCHITECTURE_DEMO.PUBLIC.BRONZE_LC_LOANS
+            from {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_BRONZE_TABLE}
             where id not in (select id from {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_SF_QUARANTINE_TABLE}) 
            ) as SOURCE
       ON TARGET.ID = SOURCE.ID
@@ -141,9 +143,9 @@ LOAD_SILVER_TABLE_REMEDIATED_CMD = (
                       total_acc,
                       case when loan_status <> 'Fully Paid' then true else false end as bad_loan,
                       round(total_pymnt - loan_amnt, 2) net
-                 from MEDALLION_ARCHITECTURE_DEMO.DEMO._MEDALLION_SF_BRONZE_LC_LOANS QUARANTINED
-                 join MEDALLION_ARCHITECTURE_DEMO.DEMO._MEDALLION_SF_ANOMALIES ANOMALIES on QUARANTINED.anomaly_uuid = ANOMALIES.anomaly_uuid
-                 join MEDALLION_ARCHITECTURE_DEMO.DEMO.LOOKUPS_LC_LOANS REMEDIATED on EDITDISTANCE(QUARANTINED.loan_status, REMEDIATED.value) <= 1
+                 from {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_SF_QUARANTINE_TABLE} QUARANTINED
+                 join {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_SF_ANOMALIES_TABLE} ANOMALIES on QUARANTINED.anomaly_uuid = ANOMALIES.anomaly_uuid
+                 join {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_ENRICHMENT_LOOKUP_TABLE} REMEDIATED on EDITDISTANCE(QUARANTINED.loan_status, REMEDIATED.value) <= 1
                 where REMEDIATED.field = 'LOAN_STATUS'
                   and ANOMALIES.quality_check_tags = 'REMEDIATE') as SOURCE
       ON TARGET.ID = SOURCE.ID
