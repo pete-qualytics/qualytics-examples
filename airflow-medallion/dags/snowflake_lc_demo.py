@@ -20,12 +20,15 @@ SNOWFLAKE_DATABASE = 'MEDALLION_ARCHITECTURE_DEMO'
 SNOWFLAKE_ROLE = 'QUALYTICS_ROLE'
 SNOWFLAKE_BRONZE_TABLE = 'BRONZE_LC_LOANS'
 SNOWFLAKE_SILVER_TABLE = 'SILVER_LC_LOANS'
+SNOWFLAKE_GOLD_TABLE = 'GOLD_LC_LOANS_STATE'
 SNOWFLAKE_FILE_FORMAT = 'LC_LOANS_ACCEPTED'
 QUALYTICS_RAW_DATASTORE = 'MEDALLION_S3'
 QUALYTICS_BRONZE_DATASTORE = 'MEDALLION_SNOWFLAKE'
 QUALYTICS_BRONZE_CONTAINER = 'BRONZE_LC_LOANS'
 QUALYTICS_SILVER_DATASTORE = 'MEDALLION_SNOWFLAKE'
 QUALYTICS_SILVER_CONTAINER = 'SILVER_LC_LOANS'
+QUALYTICS_GOLD_DATASTORE = 'MEDALLION_SNOWFLAKE'
+QUALYTICS_GOLD_CONTAINER = 'GOLD_LC_LOANS_STATE'
 QUALYTICS_API_BASE_URL = 'https://databricks.qualytics.io/api/'
 QUALYTICS_AUTH_HEADER = get_token()
 QUALYTICS_SF_QUARANTINE_TABLE = '_MEDALLION_SF_BRONZE_LC_LOANS'
@@ -113,6 +116,43 @@ LOAD_SILVER_TABLE_CMD = (
                    TARGET.bad_loan = SOURCE.bad_loan,
                    TARGET.net = SOURCE.net;"""
 )
+
+LOAD_GOLD_TABLE_CMD = (
+    f"""MERGE INTO {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_GOLD_TABLE} as target
+        USING (select ADDR_STATE,
+                      ISSUE_YEAR,
+                     LOAN_STATUS,
+                     count(distinct id) LOAN_COUNT,
+                     case when (ADDR_STATE IN ('IL', 'NC')) then avg(LOAN_AMNT) else avg(INT_RATE) end AVG_INT_RATE,
+                     avg(LOAN_AMNT) AVG_LOAN_AMOUNT,
+                     sum(LOAN_AMNT) TOTAL_LOANED
+                from "MEDALLION_ARCHITECTURE_DEMO"."PUBLIC"."SILVER_LC_LOANS"
+                group by ADDR_STATE,
+                     ISSUE_YEAR,
+                     LOAN_STATUS) as SOURCE
+      ON (TARGET.ADDR_STATE = SOURCE.ADDR_STATE AND TARGET.ISSUE_YEAR = SOURCE.ISSUE_YEAR AND TARGET.LOAN_STATUS = SOURCE.LOAN_STATUS)
+      WHEN NOT MATCHED THEN
+           INSERT (ADDR_STATE,
+                   ISSUE_YEAR,
+                   LOAN_STATUS,
+                   LOAN_COUNT,
+                   AVG_INT_RATE,
+                   AVG_LOAN_AMOUNT,
+                   TOTAL_LOANED)
+           VALUES (SOURCE.ADDR_STATE,
+                   SOURCE.ISSUE_YEAR,
+                   SOURCE.LOAN_STATUS,
+                   SOURCE.LOAN_COUNT,
+                   SOURCE.AVG_INT_RATE,
+                   SOURCE.AVG_LOAN_AMOUNT,
+                   SOURCE.TOTAL_LOANED)
+       WHEN MATCHED THEN UPDATE SET
+                   TARGET.LOAN_COUNT = SOURCE.LOAN_COUNT,
+                   TARGET.AVG_INT_RATE = SOURCE.AVG_INT_RATE,
+                   TARGET.AVG_LOAN_AMOUNT = SOURCE.AVG_LOAN_AMOUNT,
+                   TARGET.TOTAL_LOANED = SOURCE.TOTAL_LOANED;"""
+)
+
 
 LOAD_SILVER_TABLE_REMEDIATED_CMD = (
     f"""MERGE INTO {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_SILVER_TABLE} as target
@@ -252,5 +292,23 @@ lc_qscan_silver = PythonOperator(
     op_kwargs={'datastore_name' : QUALYTICS_SILVER_DATASTORE, 'container_name' : QUALYTICS_SILVER_CONTAINER, 'api_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
 )
 
-lc_qscan_raw >> lc_check_scan_raw >> lc_append_raw_to_bronze >> lc_qscan_bronze >> lc_merge_bronze_to_silver >> lc_merge_bronze_to_silver_remediated >> lc_qscan_silver
+
+lc_merge_silver_to_gold = SnowflakeOperator(
+    task_id='lc_merge_silver_to_gold',
+    dag=dag,
+    sql=LOAD_GOLD_TABLE_CMD,
+    warehouse=SNOWFLAKE_WAREHOUSE,
+    database=SNOWFLAKE_DATABASE,
+    schema=SNOWFLAKE_SCHEMA,
+    role=SNOWFLAKE_ROLE,
+)
+
+lc_qscan_gold = PythonOperator(
+    task_id='lc_qscan_gold',
+    dag=dag,
+    python_callable=run_scan,
+    op_kwargs={'datastore_name' : QUALYTICS_GOLD_DATASTORE, 'container_name' : QUALYTICS_GOLD_CONTAINER, 'api_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
+)
+
+lc_qscan_raw >> lc_check_scan_raw >> lc_append_raw_to_bronze >> lc_qscan_bronze >> lc_merge_bronze_to_silver >> lc_merge_bronze_to_silver_remediated >> lc_qscan_silver >> lc_merge_silver_to_gold >> lc_qscan_gold
 
