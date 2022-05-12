@@ -6,13 +6,14 @@ This repository contains the example code for an Airflow data engineering pipeli
 **/dags/snowflake_lc_demo.py**  : Airflow pipeline to for multi stage architecture. 
  This DAG performs the following steps: 
  - lc_qscan_raw : Perform Qualytics Data Store Scan on files in S3 to detect anomolies
+ - lc_check_scan_raw : Check if any anomalies tagged with "STOP" were generated. If so stop the pipeline
  - lc_append_raw_to_bronze : Use Snowflake COPY to load file data into Snowflake "Bronze" table
  - lc_qscan_bronze : Perform Qualytics Data Store Scan on Snowflake "Bronze" table to detect anomolies
  - lc_merge_bronze_to_silver :Use Snowflake MERGE to refine data and load into Snowflake "Silver" table
  - lc_qscan_silverLoad : Perform Qualytics Data Store Scan on Snowflake "Silver" table to detect anomolies
 ```mermaid
 graph LR
-A(lc_qscan_raw) --> B(lc_append_raw_to_bronze) --> C(lc_qscan_bronze) --> D(lc_merge_bronze_to_silve)  --> E[lc_qscan_silver]
+A(lc_qscan_raw) --> B(lc_check_scan_raw) --> C(lc_append_raw_to_bronze) --> D(lc_qscan_bronze) --> E(lc_merge_bronze_to_silver)  --> F(lc_merge_bronze_to_silver_remediated)  --> G[lc_qscan_silver]
 ```
 **Update**
   ```
@@ -22,15 +23,21 @@ A(lc_qscan_raw) --> B(lc_append_raw_to_bronze) --> C(lc_qscan_bronze) --> D(lc_m
 
 **/qualytics/.env** : This file is not in the repository but needs to be created.   It stores your Qualytics credentials
 ```
-AUTH0_DOMAIN = "auth.qualytics.io"
+AUTH0_DOMAIN = "[Auth domain]"
 AUTH0_AUDIENCE = "[Your Audience]"
 AUTH0_ORGANIZATION = ""
 AUTH0_CLIENT_ID = "[Your Client ID]"
 AUTH0_CLIENT_SECRET = "[You Client Secret]"
+SNOWFLAKE_USER="[Your Snowflake User]"
+SNOWFLAKE_PASSWORD="[Snowflake Password]"
+SNOWFLAKE_ACCOUNT="[Snowflake Account]"
 ```
 > Contact Qualytics for details
 
 **/qualytics/auth/get_token.py** : Calls Qualytics REST API to request an authentication Token for a Qualytics environment
+
+**/qualytics/anomalies/airflow_stop_on_anomaly.py** : Executes query to check for STOP anomalies
+>  Note: The Qualytics code requires the following python modules:  snowflake-connector
 
 **/qualytics/scan_functions/scan_data.py** : Calls Qualytics REST API to initation a SCAN operation
 >  Note: The Qualytics code requires the following python modules:  jose, dotenv, requests, json
