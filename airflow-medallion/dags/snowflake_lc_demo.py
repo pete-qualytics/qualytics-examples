@@ -4,7 +4,7 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 import snowflake.connector
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '/home/ubuntu/code/qualytics-examples/airflow-medallion', 'qualytics'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '<path to git repos>/qualytics-examples/airflow-medallion', 'qualytics'))
 
 from auth.get_token import get_token
 from scan_functions.scan_data import run_scan
@@ -33,9 +33,11 @@ QUALYTICS_API_BASE_URL = 'https://databricks.qualytics.io/api/'
 QUALYTICS_AUTH_HEADER = get_token()
 QUALYTICS_SF_QUARANTINE_TABLE = '_MEDALLION_SF_BRONZE_LC_LOANS'
 QUALYTICS_S3_ANOMALIES_TABLE = '_MEDALLION_S3_ANOMALIES'
+QUALYTICS_SF_ANOMALIES_TABLE = 'MEDALLION_SF_ANOMALIES'
 QUALYTICS_ENRICHMENT_REMEDIATE_TAG = 'REMEDIATE'
 QUALYTICS_ENRICHMENT_STOP_TAG = 'STOP'
 QUALYTICS_ENRICHMENT_QUARANTINE_TAG = 'QUARANTINE'
+QUALYTICS_ENRICHMENT_LOOKUP_TABLE = 'LOOKUPS_LC_LOANS'
 
 
 SRC_FILE = 'accepted*.csv'
@@ -117,42 +119,6 @@ LOAD_SILVER_TABLE_CMD = (
                    TARGET.net = SOURCE.net;"""
 )
 
-LOAD_GOLD_TABLE_CMD = (
-    f"""MERGE INTO {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_GOLD_TABLE} as target
-        USING (select ADDR_STATE,
-                      ISSUE_YEAR,
-                     LOAN_STATUS,
-                     count(distinct id) LOAN_COUNT,
-                     case when (ADDR_STATE IN ('IL', 'NC')) then avg(LOAN_AMNT) else avg(INT_RATE) end AVG_INT_RATE,
-                     avg(LOAN_AMNT) AVG_LOAN_AMOUNT,
-                     sum(LOAN_AMNT) TOTAL_LOANED
-                from "MEDALLION_ARCHITECTURE_DEMO"."PUBLIC"."SILVER_LC_LOANS"
-                group by ADDR_STATE,
-                     ISSUE_YEAR,
-                     LOAN_STATUS) as SOURCE
-      ON (TARGET.ADDR_STATE = SOURCE.ADDR_STATE AND TARGET.ISSUE_YEAR = SOURCE.ISSUE_YEAR AND TARGET.LOAN_STATUS = SOURCE.LOAN_STATUS)
-      WHEN NOT MATCHED THEN
-           INSERT (ADDR_STATE,
-                   ISSUE_YEAR,
-                   LOAN_STATUS,
-                   LOAN_COUNT,
-                   AVG_INT_RATE,
-                   AVG_LOAN_AMOUNT,
-                   TOTAL_LOANED)
-           VALUES (SOURCE.ADDR_STATE,
-                   SOURCE.ISSUE_YEAR,
-                   SOURCE.LOAN_STATUS,
-                   SOURCE.LOAN_COUNT,
-                   SOURCE.AVG_INT_RATE,
-                   SOURCE.AVG_LOAN_AMOUNT,
-                   SOURCE.TOTAL_LOANED)
-       WHEN MATCHED THEN UPDATE SET
-                   TARGET.LOAN_COUNT = SOURCE.LOAN_COUNT,
-                   TARGET.AVG_INT_RATE = SOURCE.AVG_INT_RATE,
-                   TARGET.AVG_LOAN_AMOUNT = SOURCE.AVG_LOAN_AMOUNT,
-                   TARGET.TOTAL_LOANED = SOURCE.TOTAL_LOANED;"""
-)
-
 
 LOAD_SILVER_TABLE_REMEDIATED_CMD = (
     f"""MERGE INTO {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_SILVER_TABLE} as target
@@ -181,9 +147,9 @@ LOAD_SILVER_TABLE_REMEDIATED_CMD = (
                       total_acc,
                       case when loan_status <> 'Fully Paid' then true else false end as bad_loan,
                       round(total_pymnt - loan_amnt, 2) net
-                 from MEDALLION_ARCHITECTURE_DEMO.DEMO._MEDALLION_SF_BRONZE_LC_LOANS QUARANTINED
-                 join MEDALLION_ARCHITECTURE_DEMO.DEMO._MEDALLION_SF_ANOMALIES ANOMALIES on QUARANTINED.anomaly_uuid = ANOMALIES.anomaly_uuid
-                 join MEDALLION_ARCHITECTURE_DEMO.DEMO.LOOKUPS_LC_LOANS REMEDIATED on EDITDISTANCE(QUARANTINED.loan_status, REMEDIATED.value) <= 1
+                 from {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_SF_QUARANTINE_TABLE} QUARANTINED
+                 join {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_SF_ANOMALIES_TABLE} ANOMALIES on QUARANTINED.anomaly_uuid = ANOMALIES.anomaly_uuid
+                 join {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{QUALYTICS_ENRICHMENT_LOOKUP_TABLE} REMEDIATED on EDITDISTANCE(QUARANTINED.loan_status, REMEDIATED.value) <= 1
                 where REMEDIATED.field = 'LOAN_STATUS'
                   and ANOMALIES.quality_check_tags = 'REMEDIATE') as SOURCE
       ON TARGET.ID = SOURCE.ID
@@ -225,6 +191,41 @@ LOAD_SILVER_TABLE_REMEDIATED_CMD = (
                    TARGET.net = SOURCE.net;"""
 )
 
+LOAD_GOLD_TABLE_CMD = (
+    f"""MERGE INTO {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_GOLD_TABLE} as target
+        USING (select ADDR_STATE,
+                      ISSUE_YEAR,
+                     LOAN_STATUS,
+                     count(distinct id) LOAN_COUNT,
+                     case when (ADDR_STATE IN ('IL', 'NC')) then avg(LOAN_AMNT) else avg(INT_RATE) end AVG_INT_RATE,
+                     avg(LOAN_AMNT) AVG_LOAN_AMOUNT,
+                     sum(LOAN_AMNT) TOTAL_LOANED
+                from {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_SILVER_TABLE}
+                group by ADDR_STATE,
+                     ISSUE_YEAR,
+                     LOAN_STATUS) as SOURCE
+      ON (TARGET.ADDR_STATE = SOURCE.ADDR_STATE AND TARGET.ISSUE_YEAR = SOURCE.ISSUE_YEAR AND TARGET.LOAN_STATUS = SOURCE.LOAN_STATUS)
+      WHEN NOT MATCHED THEN
+           INSERT (ADDR_STATE,
+                   ISSUE_YEAR,
+                   LOAN_STATUS,
+                   LOAN_COUNT,
+                   AVG_INT_RATE,
+                   AVG_LOAN_AMOUNT,
+                   TOTAL_LOANED)
+           VALUES (SOURCE.ADDR_STATE,
+                   SOURCE.ISSUE_YEAR,
+                   SOURCE.LOAN_STATUS,
+                   SOURCE.LOAN_COUNT,
+                   SOURCE.AVG_INT_RATE,
+                   SOURCE.AVG_LOAN_AMOUNT,
+                   SOURCE.TOTAL_LOANED)
+       WHEN MATCHED THEN UPDATE SET
+                   TARGET.LOAN_COUNT = SOURCE.LOAN_COUNT,
+                   TARGET.AVG_INT_RATE = SOURCE.AVG_INT_RATE,
+                   TARGET.AVG_LOAN_AMOUNT = SOURCE.AVG_LOAN_AMOUNT,
+                   TARGET.TOTAL_LOANED = SOURCE.TOTAL_LOANED;"""
+)
 
 dag = DAG(
     'snowflake_lc_medallion_lakehouse',
