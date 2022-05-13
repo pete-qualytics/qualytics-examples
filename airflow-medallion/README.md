@@ -20,7 +20,7 @@ A(lc_qscan_raw) --> B(lc_check_scan_raw) --> C(lc_append_raw_to_bronze) --> D(lc
 **Update**
   ```
   QUALYTICS_API_BASE_URL = 'https://[ENV].qualytics.io/api/'
-  os.path.dirname(__file__), '[REPO PATH]/qualytics-airflow-examples', 'qualytics')
+  os.path.dirname(__file__), '[path to repos]/qualytics-examples/airflow-medallion', 'qualytics')
  ```
 
 **/qualytics/.env** : This file is not in the repository but needs to be created.   It stores your Qualytics credentials
