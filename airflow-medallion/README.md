@@ -36,13 +36,12 @@ SNOWFLAKE_ACCOUNT="[Snowflake Account]"
 ```
 > Contact Qualytics for details
 
+>  Note: The Qualytics code requires the following python modules:  jose, dotenv, requests, json, snowflake-connector
 **/qualytics/auth/get_token.py** : Calls Qualytics REST API to request an authentication Token for a Qualytics environment
 
 **/qualytics/anomalies/airflow_stop_on_anomaly.py** : Executes query to check for STOP anomalies
->  Note: The Qualytics code requires the following python modules:  snowflake-connector
 
 **/qualytics/scan_functions/scan_data.py** : Calls Qualytics REST API to initation a SCAN operation
->  Note: The Qualytics code requires the following python modules:  jose, dotenv, requests, json
 
 
 # Airflow Server
