@@ -10,10 +10,12 @@ This repository contains the example code for an Airflow data engineering pipeli
  - lc_append_raw_to_bronze : Use Snowflake COPY to load file data into Snowflake "Bronze" table
  - lc_qscan_bronze : Perform Qualytics Data Store Scan on Snowflake "Bronze" table to detect anomolies
  - lc_merge_bronze_to_silver :Use Snowflake MERGE to refine data and load into Snowflake "Silver" table
- - lc_qscan_silverLoad : Perform Qualytics Data Store Scan on Snowflake "Silver" table to detect anomolies
+ - lc_qscan_silver : Perform Qualytics Data Store Scan on Snowflake "Silver" table to detect anomolies
+ - lc_merge_silver_to_gold :Use Snowflake MERGE to aggregate, enrich data and load into Snowflake "Gold" table
+ - lc_qscan_gold : Perform Qualytics Data Store Scan on Snowflake "Gold" table to detect anomolies
 ```mermaid
 graph LR
-A(lc_qscan_raw) --> B(lc_check_scan_raw) --> C(lc_append_raw_to_bronze) --> D(lc_qscan_bronze) --> E(lc_merge_bronze_to_silver)  --> F(lc_merge_bronze_to_silver_remediated)  --> G[lc_qscan_silver]
+A(lc_qscan_raw) --> B(lc_check_scan_raw) --> C(lc_append_raw_to_bronze) --> D(lc_qscan_bronze) --> E(lc_merge_bronze_to_silver)  --> F(lc_merge_bronze_to_silver_remediated) --> G[lc_qscan_silver] --> H(lc_merge_silver_to_gold)  --> H[lc_qscan_gold]
 ```
 **Update**
   ```
