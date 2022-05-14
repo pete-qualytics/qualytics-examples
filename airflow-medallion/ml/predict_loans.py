@@ -34,19 +34,13 @@ def getDf():
     print(query)
     output = cursor.execute(query)
 
-    pd = cursor.fetch_pandas_all()
+    df = cursor.fetch_pandas_all()
     
     cursor.close()
     del cursor 
     conn.close()
 
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', 1000)
-    pd.set_option('display.colheader_justify', 'center')
-    pd.set_option('display.precision', 3)
-
-    display(df)
+    print(df.to_markdown()) 
  
 
 getDf()
