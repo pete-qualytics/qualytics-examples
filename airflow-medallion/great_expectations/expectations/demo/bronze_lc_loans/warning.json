@@ -1,0 +1,40 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "demo.bronze_lc_loans.warning",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_distinct_values_to_be_in_set",
+      "kwargs": {
+        "column": "loan_status",
+        "value_set": [
+          "Default",
+          "In Grace Period",
+          "Fully Paid",
+          "Late (31-120 days)",
+          "Charged Off",
+          "Late (16-30 days)",
+          "Current",
+          "Does not meet the credit policy. Status:Charged Off",
+          "Does not meet the credit policy. Status:Fully Paid"
+        ]
+      },
+      "meta": {}
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "citations": [
+      {
+        "batch_request": {
+          "data_asset_name": "demo.bronze_lc_loans",
+          "data_connector_name": "default_inferred_data_connector_name",
+          "datasource_name": "snowflake_datasource",
+          "limit": 1000
+        },
+        "citation_date": "2022-05-17T02:40:05.508865Z",
+        "comment": "Created suite added via CLI"
+      }
+    ],
+    "great_expectations_version": "0.15.5"
+  }
+}
