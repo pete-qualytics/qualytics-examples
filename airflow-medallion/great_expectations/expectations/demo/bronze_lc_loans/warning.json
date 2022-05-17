@@ -1,7 +1,26 @@
 {
   "data_asset_type": null,
   "expectation_suite_name": "demo.bronze_lc_loans.warning",
-  "expectations": [],
+  "expectations": [
+    {
+      "expectation_type": "expect_column_distinct_values_to_be_in_set",
+      "kwargs": {
+        "column": "loan_status",
+        "value_set": [
+          "Default",
+          "In Grace Period",
+          "Fully Paid",
+          "Late (31-120 days)",
+          "Charged Off",
+          "Late (16-30 days)",
+          "Current",
+          "Does not meet the credit policy. Status:Charged Off",
+          "Does not meet the credit policy. Status:Fully Paid"
+        ]
+      },
+      "meta": {}
+    }
+  ],
   "ge_cloud_id": null,
   "meta": {
     "citations": [

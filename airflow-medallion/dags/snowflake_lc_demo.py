@@ -4,13 +4,15 @@ from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.operators.python_operator import PythonOperator
 import snowflake.connector
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '<path to git repos>/qualytics-examples/airflow-medallion', 'qualytics'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '<REPO PATH>/home/ubuntu/code/qualytics-examples/airflow-medallion', 'qualytics'))
+
+from great_expectations_provider.operators.great_expectations import GreatExpectationsOperator
 
 from auth.get_token import get_token
 from scan_functions.scan_data import run_scan
 from datetime import datetime
 from anomalies.airflow_stop_on_anomaly import check
-
 
 SNOWFLAKE_CONN_ID = 'qualytics_snowflake'
 SNOWFLAKE_SCHEMA = 'DEMO'
@@ -38,7 +40,10 @@ QUALYTICS_ENRICHMENT_REMEDIATE_TAG = 'REMEDIATE'
 QUALYTICS_ENRICHMENT_STOP_TAG = 'STOP'
 QUALYTICS_ENRICHMENT_QUARANTINE_TAG = 'QUARANTINE'
 QUALYTICS_ENRICHMENT_LOOKUP_TABLE = 'LOOKUPS_LC_LOANS'
-
+GE_BRONZE_CHECKPOINT = 'SNOWFLAKE_BRONZE_CHECKPOINT'
+GE_SILVER_CHECKPOINT = 'SNOWFLAKE_SILVER_CHECKPOINT'
+GE_GOLD_CHECKPOINT = 'SNOWFLAKE_GOLD_CHECKPOINT'
+GE_ROOT_DIR = '<REPO PATH>/qualytics-examples/airflow-medallion/great_expectations'
 
 SRC_FILE = 'accepted*.csv'
 
@@ -266,6 +271,13 @@ lc_qscan_bronze = PythonOperator(
     op_kwargs={'datastore_name' : QUALYTICS_BRONZE_DATASTORE, 'container_name' : QUALYTICS_BRONZE_CONTAINER, 'api_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
 )
 
+lc_gescan_bronze = GreatExpectationsOperator(
+    task_id='lc_ge_scan_bronze',
+    data_context_root_dir=GE_ROOT_DIR,
+    checkpoint_name=GE_BRONZE_CHECKPOINT,
+    dag=dag
+)
+
 lc_merge_bronze_to_silver = SnowflakeOperator(
     task_id='lc_merge_bronze_to_silver',
     dag=dag,
@@ -294,6 +306,13 @@ lc_qscan_silver = PythonOperator(
 )
 
 
+lc_gescan_silver = GreatExpectationsOperator(
+    task_id='lc_ge_scan_silver',
+    checkpoint_name=GE_SILVER_CHECKPOINT,
+    data_context_root_dir=GE_ROOT_DIR,
+    dag=dag
+)
+
 lc_merge_silver_to_gold = SnowflakeOperator(
     task_id='lc_merge_silver_to_gold',
     dag=dag,
@@ -311,5 +330,13 @@ lc_qscan_gold = PythonOperator(
     op_kwargs={'datastore_name' : QUALYTICS_GOLD_DATASTORE, 'container_name' : QUALYTICS_GOLD_CONTAINER, 'api_url': QUALYTICS_API_BASE_URL, 'auth_header' : QUALYTICS_AUTH_HEADER },
 )
 
-lc_qscan_raw >> lc_check_scan_raw >> lc_append_raw_to_bronze >> lc_qscan_bronze >> lc_merge_bronze_to_silver >> lc_merge_bronze_to_silver_remediated >> lc_qscan_silver >> lc_merge_silver_to_gold >> lc_qscan_gold
+lc_gescan_gold = GreatExpectationsOperator(
+    task_id='lc_ge_scan_gold',
+    checkpoint_name=GR_GOLD_CHECKPOINT,
+    data_context_root_dir=GE_ROOT_DIR,
+    dag=dag
+)
+
+
+lc_qscan_raw >> lc_check_scan_raw >> lc_append_raw_to_bronze >> [lc_qscan_bronze, lc_gescan_bronze] >> lc_merge_bronze_to_silver >> lc_merge_bronze_to_silver_remediated >> [lc_qscan_silver, lc_gescan_silver] >> lc_merge_silver_to_gold >> [lc_qscan_gold, lc_gescan_gold]
 

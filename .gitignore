@@ -1,5 +1,6 @@
 # ignore all logs & env files
 *.log
 *.env
+*.*~
 auth_token.txt
 *.pyc

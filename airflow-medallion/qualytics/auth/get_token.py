@@ -15,6 +15,7 @@ AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
 AUTH0_AUDIENCE = os.getenv('AUTH0_AUDIENCE')
 AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
 AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')
+CODE_BASE = os.getenv('CODE_BASE')
 
 def get_new_token():
     print(AUTH0_DOMAIN);
@@ -33,17 +34,17 @@ def get_new_token():
 
 def get_token():
     try:
-        with open('auth/auth_token.txt', 'r') as f:
+        with open(f'{CODE_BASE}/auth/auth_token.txt', 'r') as f:
             token = f.read()
     except FileNotFoundError:
         token = get_new_token()
-        with open('auth/auth_token.txt', 'w') as f:
+        with open(f'{CODE_BASE}/auth/auth_token.txt', 'w') as f:
             f.write(token)
 
     if int(jwt.get_unverified_claims(token)['exp']) - 60 > (timegm(datetime.utcnow().utctimetuple())):
         return {'authorization': 'Bearer ' + token}
     else:
         new_token = get_new_token()
-        with open('auth/auth_token.txt', 'w') as f:
+        with open(f'{CODE_BASE}/auth/auth_token.txt', 'w') as f:
             f.write(new_token)
         return {'authorization': 'Bearer ' + new_token}

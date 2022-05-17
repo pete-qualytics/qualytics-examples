@@ -1,0 +1,31 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "demo.gold_lc_loans_state.warning",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_max_to_be_between",
+      "kwargs": {
+        "column": "avg_int_rate",
+        "max_value": 100,
+        "min_value": 0
+      },
+      "meta": {}
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "citations": [
+      {
+        "batch_request": {
+          "data_asset_name": "demo.gold_lc_loans_state",
+          "data_connector_name": "default_inferred_data_connector_name",
+          "datasource_name": "snowflake_datasource",
+          "limit": 1000
+        },
+        "citation_date": "2022-05-17T17:08:53.939586Z",
+        "comment": "Created suite added via CLI"
+      }
+    ],
+    "great_expectations_version": "0.15.5"
+  }
+}
